@@ -1869,9 +1869,23 @@ STopt  [^\n@\\]*
   /* ----- handle argument of extends and implements commands ------- */
 
 <ExtendsParam>({ID}("::"|"."))*{ID}     { // found argument
-                                          yyextra->current->extends.push_back(
-                                            BaseInfo(removeRedundantWhiteSpace(QCString(yytext)),Public,Normal)
-                                          );
+                                          StringVector inheritanceScope;
+                                          inheritanceScope = split(removeRedundantWhiteSpace(QCString(yytext)).str(),"::");
+                                          bool bOverwritten = false;
+                                          for(int i = 0; i != yyextra->current->extends.size(); i++)  {
+                                              StringVector extendedScope;
+                                              extendedScope = split(yyextra->current->extends[i].name.str(),"::");
+                                              if(extendedScope[extendedScope.size()-1]==inheritanceScope[inheritanceScope.size()-1]){
+                                                yyextra->current->extends[i].name = removeRedundantWhiteSpace(QCString(yytext));
+                                                bOverwritten = true;
+                                                break;
+                                              }
+                                          }
+                                          if(!bOverwritten){
+                                            yyextra->current->extends.push_back(
+                                              BaseInfo(removeRedundantWhiteSpace(QCString(yytext)),Public,Normal)
+                                            );
+                                          }
                                           BEGIN( Comment );
                                         }
 <ExtendsParam>{DOCNL}                   { // missing argument
